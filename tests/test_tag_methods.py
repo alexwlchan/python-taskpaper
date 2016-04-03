@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
+"""
+This file contains some methods for testing the way we handle tags.
+The code under here is moderately fiddly.
+"""
 
 import pytest
 
