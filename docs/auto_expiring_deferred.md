@@ -1,6 +1,9 @@
 # Auto-expiring deferred items
 
-I use the `@defer` tag to mark items that I don't want to handle right away.
+Sometimes I want to add an item to my task list, but I don't want to act
+on it immediately.  Perhaps it's blocked on another task, or I can't start
+doing it until a certain date.  I use the `@defer` tag to label such items.
+
 I have a few lines in my [TaskPaper theme][theming] that dim deferred items,
 so they're easy to skip when I'm skimming my task list:
 
@@ -45,7 +48,8 @@ with TaskPaperDocument('welcome.taskpaper') as document:
             if tag.name != 'defer':
                 continue
 
-            # If the tag is a defer tag, and we need to
+            # If the tag is a defer tag, and it's today's date or earlier,
+            # we should remove it
             if datetime.strptime(tag.value, '%Y-%m-%d').date() <= today:
                 item.remove_tag(*tag)
 ```
