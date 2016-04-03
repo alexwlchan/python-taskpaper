@@ -23,7 +23,7 @@ def tag_strategy():
         st.text(alphabet=alphabet, min_size=1),  # name
         st.one_of(                               # value
             st.just(''),
-            st.characters(blacklist_characters='()')
+            st.text(alphabet=st.characters(blacklist_characters='()\\'))
         )
     )
 
@@ -171,18 +171,6 @@ def test_adding_bad_tag_names_is_rejected(bad_tag_name):
     item = TaskPaperItem('I am a test @hello(world) @foo(bar) @baz')
     with pytest.raises(ValueError):
         item.add_tag(bad_tag_name)
-
-
-@pytest.mark.parametrize('bad_tag_value', [
-    'closing parens)',
-])
-def test_adding_bad_tag_values_is_rejected(bad_tag_value):
-    """
-    If we try to add a bad tag value to an item, we get a ValueError.
-    """
-    item = TaskPaperItem("No parens here!")
-    with pytest.raises(ValueError):
-        item.add_tag('hello world', value=bad_tag_value)
 
 
 @given(taglist_strategy())

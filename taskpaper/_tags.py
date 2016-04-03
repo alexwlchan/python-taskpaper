@@ -72,9 +72,6 @@ class TagCollection(MutableSequence):
     @staticmethod
     def _coerce_value_to_tag(value):
         if isinstance(value, tuple) and len(value) == 2:
-            if isinstance(value[1], str) and (')' in value[1]):
-                raise ValueError("Cannot have closing parens in tag value %r" %
-                                 value[1])
             return TaskPaperTag(value[0], value[1] or '')
         elif isinstance(value, str):
             return TaskPaperTag(value, '')
