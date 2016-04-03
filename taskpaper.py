@@ -186,3 +186,9 @@ class TaskPaperDocument(object):
             outfile.write('\n'.join(str(item) for item in self.items))
 
         shutil.move(tmp_path, self.path)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.write()

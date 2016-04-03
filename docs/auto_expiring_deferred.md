@@ -28,29 +28,26 @@ I can do this with python-taskpaper:
 from datetime import datetime
 from taskpaper import TaskPaperDocument
 
-# Load the document
-document = TaskPaperDocument('welcome.taskpaper')
-
 # Get today's date
 today = datetime.today().date()
 
-# Go through all the items in the document
-for item in document.items:
+# Get the TaskPaper document.  We can use this class as a context manager:
+# any changes we may will be written when we exit the 'with' block.
+with TaskPaperDocument('welcome.taskpaper') as document:
 
-    # Go through every tag on each item
-    for tag in item.tags:
+    # Go through all the items in the document
+    for item in document.items:
 
-        # If the tag isn't a defer tag, we can skip it
-        if tag.name != 'defer':
-            continue
+        # Go through every tag on each item
+        for tag in item.tags:
 
-        # If the tag is a defer tag, and it's today's date or earlier,
-        # we should remove this tag
-        if datetime.strptime(tag.value, '%Y-%m-%d').date() <= today:
-            item.remove_tag(*tag)
+            # If the tag isn't a defer tag, we can skip it
+            if tag.name != 'defer':
+                continue
 
-# Save the updated document.
-document.write()
+            # If the tag is a defer tag, and we need to
+            if datetime.strptime(tag.value, '%Y-%m-%d').date() <= today:
+                item.remove_tag(*tag)
 ```
 
 I have this set to run as a [Keyboard Maestro job][kmaestro] at 2am every
