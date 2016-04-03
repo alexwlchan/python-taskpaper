@@ -92,6 +92,22 @@ def test_tag_mutation():
         ('company', 'apple inc'),
     ]
 
+    # Using the set_tag method correctly updates the value of an
+    # existing tag
+    item.set_tag(name='hello', value='new_value')
+    assert item.tags == [
+        ('hello', 'new_value'),
+        ('company', 'apple inc'),
+    ]
+
+    # Using the set_tag method will create a new tag if the name doesn't
+    # already exist
+    item.set_tag(name='blue', value='aquamarine')
+    assert item.tags == [
+        ('hello', 'new_value'),
+        ('company', 'apple inc'),
+        ('blue', 'aquamarine'),
+    ]
 
 def test_tag_inclusion():
     """

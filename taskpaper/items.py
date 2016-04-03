@@ -66,9 +66,22 @@ class TaskPaperItem(object):
                 components.append('@{tag.name}'.format(tag=tag))
         return ' '.join(components)
 
+    def set_tag(self, name, value):
+        """
+        If there is already a tag with the given name, updates the value.
+        If there isn't, creates a new tag.
+        """
+        for idx, tag in enumerate(self.tags):
+            if tag.name == name:
+                self.tags[idx] = (name, value)
+                return
+        else:
+            self.add_tag(name, value)
+
     def add_tag(self, name, value=None):
         """
-        Add a new tag with the given name and value.
+        Add a new tag with the given name and value.  Unlike set_tag,
+        this won't overwrite an existing tag.
         """
         if value is None:
             self.tags.append(name)
