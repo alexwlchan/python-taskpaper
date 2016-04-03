@@ -12,6 +12,9 @@ class TaskPaperDocument(object):
         self.path = path
         self.text = self._read()
 
+    def __repr__(self):
+        return '%s(path=%r)' % (type(self).__name__, self.path)
+
     def _read(self):
         try:
             with open(self.path) as infile:
