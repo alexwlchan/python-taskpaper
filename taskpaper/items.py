@@ -9,7 +9,7 @@ import re
 
 try:
     from collections.abc import MutableSequence
-except ImportError:  # Python 2
+except ImportError:  # pragma: no cover
     from collections import MutableSequence
 
 
@@ -23,10 +23,11 @@ TaskPaperTag = collections.namedtuple('TaskPaperTag', 'name value')
 #  >   @priority(1)
 #
 TAG_REGEX = re.compile(
-    r'\B'                          # non-word boundary
-    r'@'                           # literal @ character
-    r'(?P<name>[a-z0-9\.\-_]+)'    # tag name
-    r'(?:\((?P<value>[^)]*)\))?',  # tag value (optional)
+    r'\B'                         # word boundary
+    r'@'                          # literal @ character
+    r'(?P<name>[a-z0-9\.\-_]+)'   # tag name
+    r'(?:\((?P<value>[^)]*)\))?'  # tag value (optional)
+    r'(?:\s|$)',                  # another word boundary or end-of-line
     flags=re.IGNORECASE
 )
 
@@ -111,6 +112,9 @@ class _TagCollection(MutableSequence):
     @staticmethod
     def _coerce_value_to_tag(value):
         if isinstance(value, tuple) and len(value) == 2:
+            if ')' in value[1]:
+                raise ValueError("Cannot have closing parens in tag value %r" %
+                                 value[1])
             return TaskPaperTag(*value)
         elif isinstance(value, str):
             return TaskPaperTag(value, '')
@@ -151,4 +155,7 @@ class _TagCollection(MutableSequence):
         if len(self) != len(other):
             return False
         else:
-            return all(i == j for i, j in zip(self, other))
+            return all(i == j for i, j in zip(sorted(self), sorted(other)))
+
+    def __ne__(self, other):
+        return not (self == other)

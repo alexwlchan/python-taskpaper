@@ -2,15 +2,38 @@
 # -*- encoding: utf-8 -*-
 """
 This file contains some methods for testing the way we handle tags.
-The code under here is moderately fiddly.
+The code under test is moderately fiddly.
 """
 
+import copy
+import random
+import string
+
+from hypothesis import assume, given, settings, strategies as st
 import pytest
 
 from taskpaper import TaskPaperItem
 
 
-tag_examples = [
+def tag_strategy():
+    """Strategy for generating random tags."""
+    # Only a subset of characters are allowed in tag names.
+    alphabet = string.ascii_lowercase + string.ascii_uppercase + string.digits + '.-_'
+    return st.tuples(
+        st.text(alphabet=alphabet, min_size=1),  # name
+        st.one_of(                               # value
+            st.just(''),
+            st.characters(blacklist_characters='()')
+        )
+    )
+
+
+def taglist_strategy():
+    """Strategy for generating random tag lists."""
+    return st.lists(tag_strategy())
+
+
+@pytest.mark.parametrize('item_text,tags', [
     # Example with no tags
     ['lorem ipsum', []],
 
@@ -22,9 +45,7 @@ tag_examples = [
 
     # Example with two tags, one name-only, one name and value
     ['quick @brown(fox) @jumps', [('brown', 'fox'), ('jumps', '')]]
-]
-
-@pytest.mark.parametrize('item_text,tags', tag_examples)
+])
 def test_tag_parsing(item_text, tags):
     """
     Create some items which contain tags, and check the tags are
@@ -97,18 +118,110 @@ def test_tag_inclusion():
     assert TaskPaperItem('tomato soup') not in item.tags
 
 
-
-@pytest.mark.parametrize('bad_tag', [
+@pytest.mark.parametrize('bad_tag_name', [
     47,
     float('inf'),
     TaskPaperItem('tomato soup'),
 ])
-def test_adding_bad_tags_is_rejected(bad_tag):
+def test_adding_bad_tag_names_is_rejected(bad_tag_name):
     """
-    If we try to add a bad tag to an item, we get a ValueError.
+    If we try to add a bad tag name to an item, we get a ValueError.
     """
     item = TaskPaperItem('I am a test @hello(world) @foo(bar) @baz')
     with pytest.raises(ValueError):
-        item.add_tag(bad_tag)
+        item.add_tag(bad_tag_name)
 
 
+@pytest.mark.parametrize('bad_tag_value', [
+    'closing parens)',
+])
+def test_adding_bad_tag_values_is_rejected(bad_tag_value):
+    """
+    If we try to add a bad tag value to an item, we get a ValueError.
+    """
+    item = TaskPaperItem("No parens here!")
+    with pytest.raises(ValueError):
+        item.add_tag('hello world', value=bad_tag_value)
+
+
+@given(taglist_strategy())
+def test_creating_two_items_with_the_same_tags_gives_equal_tag_lists(taglist):
+    """
+    Two items given the same tags have equal tag lists.
+    """
+    item1 = TaskPaperItem('I am a test')
+    item2 = TaskPaperItem('A different test')
+
+    for t in taglist:
+        item1.add_tag(*t)
+        item2.add_tag(*t)
+
+    assert item1.tags == item2.tags
+
+
+@pytest.mark.parametrize('bad_item_string', [
+    'hello world @tag)',
+    'hello world @tag())',
+    'hello world @tag(value)a',
+])
+def test_tag_followed_by_nonsense_char_is_ignored(bad_item_string):
+    """
+    A tag value followed by spurious parens isn't matched.  These examples
+    are obtained by experimenting with TaskPaper to see what it matches
+    as a tag.
+    """
+    item = TaskPaperItem(bad_item_string)
+    assert item.tags == []
+
+
+# TOOD: Swap this out for suppress_health_checks.
+@settings(perform_health_check=False)
+@given(taglist_strategy())
+def test_shuffling_tag_list_doesnt_affect_equality(taglist):
+    """
+    Tag lists are equal, modulo shuffling.
+    """
+    item1 = TaskPaperItem('I am a new test')
+    item2 = TaskPaperItem('Another different test')
+
+    for t in taglist:
+        item1.add_tag(*t)
+        item2.add_tag(*t)
+
+    # Shuffle the tags on item1, and check the tag lists remain equal.
+    random.shuffle(item1.tags)
+    assert item1.tags == item2.tags
+
+
+@given(taglist_strategy(), taglist_strategy())
+def test_different_taglists_of_different_lengths_are_unequal(list1, list2):
+    """
+    If two lists of tags have different length, they are never equal.
+    """
+    assume(len(list1) != len(list2))
+    item1 = TaskPaperItem('I am a new test')
+    item2 = TaskPaperItem('Another different test')
+
+    for t in list1:
+        item1.add_tag(*t)
+    for t in list2:
+        item2.add_tag(*t)
+
+    assert item1.tags != item2.tags
+
+
+@given(taglist_strategy())
+def test_round_trip_of_tag_items(taglist):
+    """
+    Casting an item with some tags to a string and back gets the same tags.
+    """
+    item = TaskPaperItem("I have no tags")
+    assert item.tags == []
+
+    for t in taglist:
+        item.add_tag(*t)
+
+    item_str = str(item)
+    new_item = TaskPaperItem(item_str)
+
+    assert new_item.tags == taglist

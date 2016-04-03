@@ -50,13 +50,13 @@ could use.  (I'd use Matt's library if I actually knew any Ruby.)
 
 ## How do I run the tests?
 
-Install `pytest`, `pytest-cov` and `coverage`:
+Install `pytest`, `pytest-cov` and `hypothesis`:
 
-    pip install pytest pytest-cov coverage
+    pip install pytest pytest-cov hypothesis
 
 then run the tests like so:
 
-    py.test --cov-report term-missing --cov taskpaper.py tests.py
+    py.test --cov-report term-missing --cov taskpaper tests
 
 This will run the tests, and show which lines aren't covered by existing tests.
 I'm trying to get better at writing tests with good coverage.
