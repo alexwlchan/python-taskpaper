@@ -155,3 +155,48 @@ def test_setting_done_state_of_uncompleted_item(item_text):
 
     item.done = False
     assert not item.done
+
+
+def test_we_can_only_set_done_once():
+    """
+    Test that an item can only ever have one 'done' tag.
+    """
+    item = TaskPaperItem('hello world')
+
+    item.add_tag(name='done', value='now')
+    assert str(item) == 'hello world @done(now)'
+
+    # If we try to add a second done tag, we can only update the
+    # existing done tag.
+    item.add_tag(name='done', value='tomorrow')
+    assert str(item) == 'hello world @done(tomorrow)'
+
+    # Call the base methods on the tag list, just to be sure.
+    item.tags.insert(0, value=('done', 'maybe'))
+    assert str(item) == 'hello world @done(maybe)'
+
+    # Add an extra tag, and then try to overwrite it.
+    item.add_tag(name='foo', value='bar')
+    item.tags[0] = ('done', 'nope')
+    assert str(item) == 'hello world @done(nope)'
+
+
+def test_done_tag_is_always_at_the_end():
+    """
+    Test that the 'done' tag is always forced to the end.
+    """
+    item = TaskPaperItem('hello world')
+
+    item.add_tag(name='done', value='now')
+    assert str(item) == 'hello world @done(now)'
+
+    # Although we added this tag *after* the done tag, the done tag should
+    # be moved to the end -- it has special significance.
+    item.add_tag(name='foo', value='bar')
+    assert str(item) == 'hello world @foo(bar) @done(now)'
+
+    # If we now add a third tag, it maintains that final spot
+    item.add_tag(name='baz')
+    assert str(item) == 'hello world @foo(bar) @baz @done(now)'
+
+

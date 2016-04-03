@@ -173,6 +173,23 @@ def test_adding_bad_tag_names_is_rejected(bad_tag_name):
         item.add_tag(bad_tag_name)
 
 
+@pytest.mark.parametrize('bad_bool', [
+    42,
+    float('nan'),
+    'cabbage',
+    'strawberry custard',
+    1 + 2j,
+])
+def test_setting_done_to_non_bool_is_error(bad_bool):
+    """
+    Trying to set the done status of an item to anything but True/False
+    is an error.
+    """
+    item = TaskPaperItem('I am an unfinished item.')
+    with pytest.raises(ValueError):
+        item.done = bad_bool
+
+
 @given(taglist_strategy())
 def test_creating_two_items_with_the_same_tags_gives_equal_tag_lists(taglist):
     """

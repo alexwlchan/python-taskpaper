@@ -85,13 +85,46 @@ class TagCollection(MutableSequence):
         return self._tags[position]
 
     def __setitem__(self, position, value):
-        self._tags[position] = self._coerce_value_to_tag(value)
+        # If the tag in question is a 'done' tag, it can only go at the
+        # end, and it has to replace any existing done tag.
+        tag = self._coerce_value_to_tag(value)
+
+        if tag.name == 'done':
+            del self._tags[position]
+            self._tags.insert(0, tag)
+        else:
+            self._tags[position] = tag
+
+        self._rearrange_for_done()
 
     def __delitem__(self, position):
         del self._tags[position]
 
     def insert(self, position, value):
-        self._tags.insert(position, self._coerce_value_to_tag(value))
+        # If the tag in question is a 'done' tag, it can only go at the
+        # end, and it has to replace any existing done tag.
+        tag = self._coerce_value_to_tag(value)
+
+        if tag.name == 'done':
+            self._tags.insert(0, tag)
+        else:
+            self._tags.insert(position, tag)
+
+        self._rearrange_for_done()
+
+    def _rearrange_for_done(self):
+        """
+        The 'done' tag can only ever go at the end, and must be unique
+        in a list of tags.  Rearrange the tag list to ensure this is
+        the case.
+        """
+        try:
+            done_tag = [tag for tag in self._tags if tag.name == 'done'].pop(0)
+        except IndexError:
+            return
+        new_tags = [tag for tag in self._tags
+                        if tag.name != 'done'] + [done_tag]
+        self._tags = new_tags
 
     def __contains__(self, value):
         # If we get a 2-tuple, assume that they're searching for an exact
