@@ -85,6 +85,15 @@ class TaskPaperItem(object):
         """
         return 'done' in self.tags
 
+    @done.setter
+    def done(self, value):
+        if value is False:
+            self.mark_undone()
+        elif value is True:
+            self.mark_done()
+        else:
+            raise ValueError("Expected True/False, got %r" % value)
+
     def done_date(self):
         """
         Returns the date on which an item was marked as done().
