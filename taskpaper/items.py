@@ -16,18 +16,30 @@ except ImportError:  # pragma: no cover
 TaskPaperTag = collections.namedtuple('TaskPaperTag', 'name value')
 
 
-# Regex for matching tags.  http://guide.taskpaper.com/getting_started.html:
+# Regex for matching tags. http://guide.taskpaper.com/getting_started.html:
 #
 #  > To create a tag, type the @ symbol followed by a name. Tags can
 #  > optionally have a value in parentheses after the tag name:
 #  >   @priority(1)
 #
+# This regex is adapted from the birch.js variable tagRegexString.
+
 TAG_REGEX = re.compile(
-    r'\B'                         # word boundary
-    r'@'                          # literal @ character
-    r'(?P<name>[a-z0-9\.\-_]+)'   # tag name
-    r'(?:\((?P<value>[^)]*)\))?'  # tag value (optional)
-    r'(?:\s|$)',                  # another word boundary or end-of-line
+    r'(?:^|\s+)'                    # word boundary
+    r'@'                            # literal @ character
+    r'(?P<name>'                    # capturing group for tag name
+    r'(?:[A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D'
+        r'\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF'
+        r'\uF900-\uFDCF\uFDF0-\uFFFD]|'
+                                    # first char of the name.
+                                    # taken directly from birch.js
+    r'[\-.0-9\u00B7\u0300-\u036F\u203F-\u2040])*)'
+                                    # other chars of the name/
+                                    # taken directly from birch.js
+    r'(?:\((?P<value>(?:\\\)|[^\)])*)\))?'
+                                    # tag value
+                                    # adapted from birch.js
+    r'(?=\s|$)',                  # another word boundary or end-of-line
     flags=re.IGNORECASE
 )
 
@@ -48,9 +60,10 @@ class TaskPaperItem(object):
 
     def _parse(self):
         # Separate the list of tags from the body text
-        m = TAG_REGEX.findall(self._text)
-        if m is not None:
-            self.tags.extend(m)
+        matches = TAG_REGEX.finditer(self._text)
+        if matches is not None:
+            for match in matches:
+                self.tags.append(match.groups())
 
         self.body_text = re.sub(TAG_REGEX, '', self.body_text).strip()
 
@@ -125,10 +138,10 @@ class _TagCollection(MutableSequence):
     @staticmethod
     def _coerce_value_to_tag(value):
         if isinstance(value, tuple) and len(value) == 2:
-            if ')' in value[1]:
+            if isinstance(value[1], str) and (')' in value[1]):
                 raise ValueError("Cannot have closing parens in tag value %r" %
                                  value[1])
-            return TaskPaperTag(*value)
+            return TaskPaperTag(value[0], value[1] or '')
         elif isinstance(value, str):
             return TaskPaperTag(value, '')
         else:

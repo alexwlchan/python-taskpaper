@@ -44,7 +44,10 @@ def taglist_strategy():
     ['foo @bar(baz)', [('bar', 'baz')]],
 
     # Example with two tags, one name-only, one name and value
-    ['quick @brown(fox) @jumps', [('brown', 'fox'), ('jumps', '')]]
+    ['quick @brown(fox) @jumps', [('brown', 'fox'), ('jumps', '')]],
+
+    # Example with some accented characters
+    ['alphabet @ÁßçDēFgHį', [('ÁßçDēFgHį', '')]],
 ])
 def test_tag_parsing(item_text, tags):
     """
@@ -132,6 +135,28 @@ def test_tag_inclusion():
     assert 47 not in item.tags
     assert float('inf') not in item.tags
     assert TaskPaperItem('tomato soup') not in item.tags
+
+
+def test_matching_tag_at_end_of_item_string():
+    """
+    Test that a tag at the end of an item is found correctly.
+    """
+    item = TaskPaperItem('Tag is right at the end @hello')
+    assert item.tags == [('hello', '')]
+
+    item2 = TaskPaperItem('Another item right at the end @hello(world)')
+    assert item2.tags == [('hello', 'world')]
+
+
+def test_matching_tag_at_start_of_item_string():
+    """
+    Test that a tag at the start of an item is found correctly.
+    """
+    item = TaskPaperItem('@hello Tag is at the very start')
+    assert item.tags == [('hello', '')]
+
+    item2 = TaskPaperItem('@hello(world) Another tag right at the start')
+    assert item2.tags == [('hello', 'world')]
 
 
 @pytest.mark.parametrize('bad_tag_name', [
