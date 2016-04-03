@@ -9,9 +9,7 @@ import re
 import shutil
 import tempfile
 
-
-class TaskPaperError(Exception):
-    pass
+from .exceptions import TaskPaperError
 
 
 class TaskPaperDocument(object):
