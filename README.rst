@@ -2,7 +2,7 @@ python-taskpaper
 ================
 
 python-taskpaper is a Python module for interacting with
-`Taskpaper <https://www.taskpaper.com>`-formatted documents.
+`Taskpaper <https://www.taskpaper.com>`_-formatted documents.
 
 What does it do?
 ****************
