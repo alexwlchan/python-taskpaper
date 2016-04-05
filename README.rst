@@ -15,7 +15,8 @@ free time.
 I will probably change the API in a non-backwards compatible way before 1.0.
 User beware.
 
-Look in the `docs` directory for some examples of how I'm using it.
+Look in the ``docs`` directory for some examples of how I'm using it.  I'll
+write proper documentation soon.
 
 What does it require?
 *********************
@@ -27,8 +28,9 @@ only (for now).
 How do I install it?
 ********************
 
-Download the `taskpaper.py` script from the root of this repository.
-I'll put it on PyPI at some point.
+You can install it from PyPI::
+
+   pip install python-taskpaper
 
 Why write this?  Why not use the built-in scripting?
 ****************************************************
