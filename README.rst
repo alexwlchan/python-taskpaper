@@ -49,7 +49,7 @@ I hate Python.
 Good for you.
 
 There's built-in support for scripting the TaskPaper app with JavaScript or
-AppleScript, or Matt Gemmell has written a `Ruby library <https://github.com/mattgemmell/TaskPaperRuby>` that you
+AppleScript, or Matt Gemmell has written a `Ruby library <https://github.com/mattgemmell/TaskPaperRuby>`_ that you
 could use.  (I'd use Matt's library if I actually knew any Ruby.)
 
 How do I run the tests?
