@@ -8,6 +8,7 @@ from datetime import datetime
 import re
 
 from .exceptions import TaskPaperError
+from ._links import LINK_REGEX
 from ._tags import TAG_REGEX, TaskPaperTag, TagCollection
 
 
@@ -27,6 +28,7 @@ class TaskPaperItem(object):
         # Strip trailing whitespace from the name.
         self._text = text.rstrip()
 
+        self.links = []
         self.tags = TagCollection()
         self.body_text = self._text
 
@@ -39,13 +41,21 @@ class TaskPaperItem(object):
             for match in matches:
                 self.tags.append(match.groups())
 
+        # Separate the list of links from the body text
+        matches = LINK_REGEX.findall(self._text)
+        if matches is not None:
+            self.links.extend(matches)
+
         self.body_text = re.sub(TAG_REGEX, '', self.body_text).strip()
+        self.body_text = re.sub(LINK_REGEX, '', self.body_text).strip()
 
     def __repr__(self):
         return '%s(text=%r)' % (type(self).__name__, self._text)
 
     def __str__(self):
         components = [self.body_text]
+        for link in self.links:
+            components.append(link)
         for tag in self.tags:
             if tag.value:
                 components.append('@{tag.name}({tag.value})'.format(tag=tag))

@@ -134,3 +134,27 @@ date.
    >>> item.set_done_date('2015-03-08')
    >>> item.done_date()
    '2015-03-08'
+
+Working with links
+******************
+
+In the TaskPaper interface, links (file paths, URLs, and email addresses) are
+highlighted and clickable.  You can manipulate these links in Python.
+
+Look up the links on an item with the ``links`` attribute::
+
+   >>> item1 = TaskPaperItem('- Buy some apples')
+   >>> item1.links
+   []
+
+   >>> item2 = TaskPaperItem('- Buy some bananas https://en.wikipedia.org/wiki/Bananas')
+   >>> item2.links
+   ['https://en.wikipedia.org/wiki/Bananas']
+
+The ``links`` attribute is just a list, so you can add, remove, and edit links
+as if you were working in a normal list.  This is reflected when you turn
+the item back into a string::
+
+   >>> item2.links.append('http://www.bbc.co.uk/food/banana')
+   >>> str(item2)
+   '- Buy some bananas https://en.wikipedia.org/wiki/Bananas http://www.bbc.co.uk/food/banana'
