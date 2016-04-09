@@ -5,14 +5,15 @@ This file contains some tests for the way items are marked with the
 'done' state.
 """
 
-# import copy
-# import random
-# import string
-#
-# from hypothesis import assume, given, settings, strategies as st
 import pytest
 
+import taskpaper
 from taskpaper import TaskPaperItem, TaskPaperError
+
+
+# Mock out the function that produces the date string for a new @done tag.
+MOCK_DATE_STR = '2016-04-09'
+taskpaper.items._today = lambda: MOCK_DATE_STR
 
 
 completed_item_examples = [
@@ -33,35 +34,37 @@ uncompleted_item_examples = [
 
 
 @pytest.mark.parametrize('item_text,completion_date', completed_item_examples)
-def test_completed_items_are_done(item_text, completion_date):
+def test_completed_item_strings_are_done(item_text, completion_date):
     """
-    Create some items with the done tag, and test they all register as done.
+    Create some items from strings that include the @done tag.
+    Test that they all register as completed.
     """
     assert TaskPaperItem(item_text).done
 
 
 @pytest.mark.parametrize('item_text', uncompleted_item_examples)
-def test_uncompleted_items_are_not_done(item_text):
+def test_uncompleted_item_strings_are_not_done(item_text):
     """
-    Create some items without the done tag, and test they all register as
-    uncompleted.
+    Create some items from strings that don't include the @done tag.
+    Test that they register as incomplete.
     """
     assert not TaskPaperItem(item_text).done
 
 
-@pytest.mark.parametrize('item_text,completion_date', completed_item_examples)
-def test_getting_done_date_of_completed_items(item_text, completion_date):
+@pytest.mark.parametrize('item_text,done_date', completed_item_examples)
+def test_getting_done_date_of_completed_item_strings(item_text, done_date):
     """
-    Getting the done date of a completed task gets the correct date.
+    Create some items from strings that include the @done tag and a date.
+    Check that the correct date is recognised.
     """
-    assert TaskPaperItem(item_text).done_date() == completion_date
+    assert TaskPaperItem(item_text).done_date() == done_date
 
 
 @pytest.mark.parametrize('item_text', uncompleted_item_examples)
 def test_getting_done_date_of_uncompleted_is_error(item_text):
     """
     Trying to get the done date of a task which isn't completed throws
-    a TaskNotDone error.
+    a TaskPaperError error.
     """
     with pytest.raises(TaskPaperError):
         TaskPaperItem(item_text).done_date()
@@ -70,61 +73,46 @@ def test_getting_done_date_of_uncompleted_is_error(item_text):
 @pytest.mark.parametrize('item_text', uncompleted_item_examples)
 def test_marking_as_done_completes_an_item(item_text):
     """
-    Calling the 'mark_done' method marks an item as not done.
+    Setting the 'done' attribute marks an item as complete with
+    today's date.
     """
     item = TaskPaperItem(item_text)
-    item.mark_done()
+
+    item.done = True
     assert item.done
+    assert item.done_date() == MOCK_DATE_STR
 
 
 @pytest.mark.parametrize('item_text,completion_date', completed_item_examples)
 def test_marking_as_undone_uncompletes_an_item(item_text, completion_date):
     """
-    Calling the 'mark_undone' method marks an item as not done.
+    Unsetting the 'done' attribute marks an item as incomplete.
     """
     item = TaskPaperItem(item_text)
-    item.mark_undone()
+    item.done = False
     assert not item.done
 
 
 @pytest.mark.parametrize('item_text', uncompleted_item_examples)
 def test_marking_an_undone_item_as_undone_is_a_noop(item_text):
     """
-    If an item is already 'not done', calling 'mark_undone' has no effect.
+    If an item is already incomplete, setting the 'done' attribute to
+    False has no effect.
     """
     item = TaskPaperItem(item_text)
-    item.mark_undone()
+    item.done = False
     assert not item.done
 
 
 @pytest.mark.parametrize('item_text,completion_date', completed_item_examples)
 def test_marking_a_done_item_as_done_is_a_noop(item_text, completion_date):
     """
-    If an item is already done, calling 'mark_done' has no effect.
+    If an item is already done, setting the 'done' attribute to
+    True has no effect.
     """
     item = TaskPaperItem(item_text)
-    item.mark_done()
+    item.done = True
     assert item.done
-
-
-@pytest.mark.parametrize('item_text', uncompleted_item_examples)
-def test_toggling_an_undone_item_makes_it_done(item_text):
-    """
-    If an item is not done, calling 'toggle_done' makes it done.
-    """
-    item = TaskPaperItem(item_text)
-    item.toggle_done()
-    assert item.done
-
-
-@pytest.mark.parametrize('item_text,completion_date', completed_item_examples)
-def test_toggling_an_done_item_makes_it_undone(item_text, completion_date):
-    """
-    If an item is done, calling 'toggle_done' makes it undone.
-    """
-    item = TaskPaperItem(item_text)
-    item.toggle_done()
-    assert not item.done
 
 
 @pytest.mark.parametrize('item_text,completion_date', completed_item_examples)
@@ -155,6 +143,32 @@ def test_setting_done_state_of_uncompleted_item(item_text):
 
     item.done = False
     assert not item.done
+
+
+@pytest.mark.parametrize('item_text', uncompleted_item_examples)
+def test_setting_custom_done_date(item_text):
+    """
+    Mark an item as done, then check we can set the done date to another
+    string.
+    """
+    item = TaskPaperItem(item_text)
+
+    item.done = True
+    assert item.done_date() == MOCK_DATE_STR
+
+    item.set_done_date('yesterday')
+    assert item.done_date() == 'yesterday'
+
+
+@pytest.mark.parametrize('item_text', uncompleted_item_examples)
+def test_setting_custom_done_date(item_text):
+    """
+    Check that we can mark an item as done on a particular date.
+    """
+    item = TaskPaperItem(item_text)
+
+    item.mark_done(date='tomorrow')
+    assert item.done_date() == 'tomorrow'
 
 
 def test_we_can_only_set_done_once():
@@ -198,5 +212,3 @@ def test_done_tag_is_always_at_the_end():
     # If we now add a third tag, it maintains that final spot
     item.add_tag(name='baz')
     assert str(item) == 'hello world @foo(bar) @baz @done(now)'
-
-

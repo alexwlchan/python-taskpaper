@@ -11,6 +11,13 @@ from .exceptions import TaskPaperError
 from ._tags import TAG_REGEX, TaskPaperTag, TagCollection
 
 
+def _today():  # pragma: no cover
+    """
+    Returns a YYYY-MM-DD representation of today's date.
+    """
+    return str(datetime.today().date())
+
+
 class TaskPaperItem(object):
 
     # Number of spaces per indentation level
@@ -88,17 +95,16 @@ class TaskPaperItem(object):
     @done.setter
     def done(self, value):
         if value is False:
-            self.mark_undone()
+            self.remove_tag('done')
         elif value is True:
-            self.mark_done()
+            self.set_tag('done', _today())
         else:
             raise ValueError("Expected True/False, got %r" % value)
 
     def done_date(self):
         """
-        Returns the date on which an item was marked as done().
-        Throws a TaskNotDone exception if the task is not actually
-        completed.
+        Returns the date on which an item was marked as completed.
+        Throws a TaskPaperError if the task is unfinished.
         """
         try:
             done_tag = [tag for tag in self.tags if tag.name == 'done'].pop()
@@ -106,26 +112,15 @@ class TaskPaperItem(object):
             raise TaskPaperError("Trying to get done date of an unfinished task")
         return done_tag.value
 
-    def mark_done(self):
+    def mark_done(self, date):
         """
-        Marks a task as done, with today's date.  Does not change the date
-        if the task is already done.
+        Mark an item as complete on a particular day.
         """
-        if 'done' not in self.tags:
-            self.set_tag(name='done', value=str(datetime.today().date()))
+        self.done = True
+        self.set_done_date(date)
 
-    def mark_undone(self):
+    def set_done_date(self, date):
         """
-        Removes the done tag from a task.  Does nothing if the task does not
-        already have this tag set.
+        Set the date on which a task was marked as completed.
         """
-        self.remove_tag(name='done')
-
-    def toggle_done(self):
-        """
-        Toggles the 'done' status of a task.
-        """
-        if self.done:
-            self.mark_undone()
-        else:
-            self.mark_done()
+        self.set_tag('done', date)

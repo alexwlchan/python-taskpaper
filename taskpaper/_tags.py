@@ -64,10 +64,10 @@ class TagCollection(MutableSequence):
         self._tags = []
 
     def __repr__(self):
-        return repr(self._tags)
+        return str(self)
 
     def __str__(self):
-        return str(self._tags)
+        return str([tuple(x) for x in self._tags])
 
     @staticmethod
     def _coerce_value_to_tag(value):
