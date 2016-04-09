@@ -5,7 +5,7 @@ from distutils.core import setup
 
 setup(
     name='python-taskpaper',
-    version='0.1a',
+    version='0.2',
 
     author='Alex Chan',
     author_email='alex@alexwlchan.net',
