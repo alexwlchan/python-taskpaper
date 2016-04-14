@@ -1,6 +1,12 @@
 Release history
 ===============
 
+Next release
+************
+
+*  Drop the ``done_date()``, ``mark_done()`` and ``set_done_date()`` methods,
+   in favour of just looking up ``done`` as a regular tag.
+
 0.2 "It's all linked" (2016-04-09)
 **********************************
 
