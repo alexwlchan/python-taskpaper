@@ -110,27 +110,3 @@ class TaskPaperItem(object):
             self.set_tag('done', _today())
         else:
             raise ValueError("Expected True/False, got %r" % value)
-
-    def done_date(self):
-        """
-        Returns the date on which an item was marked as completed.
-        Throws a TaskPaperError if the task is unfinished.
-        """
-        try:
-            done_tag = [tag for tag in self.tags if tag.name == 'done'].pop()
-        except IndexError:
-            raise TaskPaperError("Trying to get done date of an unfinished task")
-        return done_tag.value
-
-    def mark_done(self, date):
-        """
-        Mark an item as complete on a particular day.
-        """
-        self.done = True
-        self.set_done_date(date)
-
-    def set_done_date(self, date):
-        """
-        Set the date on which a task was marked as completed.
-        """
-        self.set_tag('done', date)
