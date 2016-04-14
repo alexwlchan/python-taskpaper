@@ -6,6 +6,11 @@ This file contains the code for working with links.
 
 import re
 
+try:
+    from collections.abc import MutableSequence
+except ImportError:  # pragma: no cover
+    from collections import MutableSequence
+
 
 # Regex for matching email addresses.  This is taken from birch.js.
 EMAIL_REGEX = (
@@ -21,7 +26,6 @@ EMAIL_REGEX = (
 
 # Regex for matching paths.  This is adapted from birch.js
 PATH_REGEX = (
-    # r'^|\s'                 # Whitespace or start-of-line.
     r'\.?\/'                # Slash and dot (optional) for start of path
     r'(?:\\\s|[^\0 ]+)'     # Either an escaped space ('\ ') or any char
                             # which isn't a space
@@ -61,3 +65,48 @@ LINK_REGEX = re.compile(
     '(?:^|\s)(%s|%s|%s)' % (EMAIL_REGEX, PATH_REGEX, WEB_REGEX),
     flags=re.IGNORECASE
 )
+
+
+class LinkCollection(MutableSequence):
+    """
+    Collection of links.  Acts like a list, but trying to add or remove
+    anything that doesn't match LINK_REGEX will throw a ValueError.
+    """
+    def __init__(self):
+        self.__links = []
+
+    def __repr__(self):
+        return str(self)
+
+    def __str__(self):
+        return str(self.__links)
+
+    def __len__(self):
+        return len(self.__links)
+
+    def __getitem__(self, position):
+        return self.__links[position]
+
+    def __setitem__(self, position, value):
+        if not re.search('^' + LINK_REGEX.pattern + '$', value, flags=re.IGNORECASE):
+            raise ValueError("Tried to add non-link %s" % value)
+        self.__links[position] = value
+
+    def __delitem__(self, position, value):
+        if not re.search('^' + LINK_REGEX.pattern + '$', value, flags=re.IGNORECASE):
+            raise ValueError("Tried to delete non-link %s" % value)
+        del self.__links[position]
+
+    def insert(self, position, value):
+        if not re.search('^' + LINK_REGEX.pattern + '$', value, flags=re.IGNORECASE):
+            raise ValueError("Tried to insert non-link %s" % value)
+        self.__links.insert(position, value)
+
+    def __eq__(self, other):
+        if len(self) != len(other):
+            return False
+        else:
+            return all(i == j for i, j in zip(self, other))
+
+    def __neq__(self, other):
+        return not (self == other)
