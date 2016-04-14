@@ -40,6 +40,9 @@ def taglist_strategy():
     # Example with one tag, name-only
     ['hello @world', [('world', '')]],
 
+    # Example with a tag in the middle of the item
+    ['foo @bar baz', [('bar', '')]],
+
     # Example with one tag, both name and value
     ['foo @bar(baz)', [('bar', 'baz')]],
 
