@@ -67,40 +67,58 @@ LINK_REGEX = re.compile(
 )
 
 
+def is_string_link(text):
+    """Returns True if text contains a link, False otherwise."""
+    return re.search('^' + LINK_REGEX.pattern + '$', text, flags=re.IGNORECASE)
+
+
 class LinkCollection(MutableSequence):
     """
     Collection of links.  Acts like a list, but trying to add or remove
     anything that doesn't match LINK_REGEX will throw a ValueError.
     """
-    def __init__(self):
-        self.__links = []
+    def __init__(self, item):
+        self.item = item
+
+    def __str__(self):
+        return str([x.group(1) for x in self._raw_links()])
 
     def __repr__(self):
         return str(self)
 
-    def __str__(self):
-        return str(self.__links)
+    def _raw_links(self):
+        try:
+            return list(LINK_REGEX.finditer(self.item.text))
+        except AttributeError:
+            return []
 
     def __len__(self):
-        return len(self.__links)
+        return len(self._raw_links())
 
     def __getitem__(self, position):
-        return self.__links[position]
+        return self._raw_links()[position].group(1)
 
     def __setitem__(self, position, value):
-        if not re.search('^' + LINK_REGEX.pattern + '$', value, flags=re.IGNORECASE):
+        if not is_string_link(value):
             raise ValueError("Tried to add non-link %s" % value)
-        self.__links[position] = value
+        try:
+            existing = self._raw_links()[position]
+            start, stop = existing.span()
+            self.item.text = (
+                self.item.text[:start+1] +
+                value +
+                self.item.text[stop:]
+            )
+        except IndexError:
+            self.item.text += ' %s' % value
 
-    def __delitem__(self, position, value):
-        if not re.search('^' + LINK_REGEX.pattern + '$', value, flags=re.IGNORECASE):
-            raise ValueError("Tried to delete non-link %s" % value)
-        del self.__links[position]
+    def __delitem__(self, key):
+        del self._links[key]
 
-    def insert(self, position, value):
-        if not re.search('^' + LINK_REGEX.pattern + '$', value, flags=re.IGNORECASE):
-            raise ValueError("Tried to insert non-link %s" % value)
-        self.__links.insert(position, value)
+    def insert(self, key, value):
+        if not is_string_link(value):
+            raise ValueError("Tried to add non-link %s" % value)
+        self._links.insert(key, value)
 
     def __eq__(self, other):
         if len(self) != len(other):

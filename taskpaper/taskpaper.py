@@ -4,12 +4,11 @@
 This file contains the start of an API for dealing with TaskPaper documents.
 """
 
-import collections
-import re
 import shutil
 import tempfile
 
 from .exceptions import TaskPaperError
+from .items import TaskPaperItem
 
 
 class TaskPaperDocument(object):
