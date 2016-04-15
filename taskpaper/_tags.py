@@ -5,16 +5,10 @@ This file contains code for handling tags in TaskPaper items.
 """
 
 import collections
-
 import re
 
-try:
-    from collections.abc import MutableSequence
-except ImportError:  # pragma: no cover
-    from collections import MutableSequence
 
-
-TaskPaperTag = collections.namedtuple('TaskPaperTag', 'name value')
+TaskPaperTag = collections.namedtuple('TaskPaperTag', 'name value span')
 
 
 # Regex for matching tags. http://guide.taskpaper.com/getting_started.html:
@@ -45,107 +39,86 @@ TAG_REGEX = re.compile(
 )
 
 
-# Defining a collection of tags as an ABC is arguably overkill.  All I really
-# want is the ability to search the list by name only, e.g. given the item
-#
-#    - Pick up dry cleaning @hello(world)
-#
-# I should be able to write `'hello' in item.tags`, and get True.
-#
-# This also pulls the work of coercing new tags to a TaskPaperTag object
-# out of the TaskPaperDocument class.
+def stringify_tag(name, value):
+    if value:
+        return '@{name}({value})'.format(name=name, value=value)
+    else:
+        return '@{name}'.format(name=name)
 
-class TagCollection(MutableSequence):
-    """
-    Collection of tags that lets you search for inclusion by tag name
-    or tag value.
-    """
-    def __init__(self):
-        self._tags = []
+
+class TagCollection(collections.OrderedDict):
+
+    def __init__(self, item):
+        self.item = item
+        super(TagCollection, self).__init__()
+        self._update()
 
     def __repr__(self):
-        return str(self)
+        return repr(collections.OrderedDict(self.items()))
 
     def __str__(self):
-        return str([tuple(x) for x in self._tags])
+        return str(collections.OrderedDict(self.items()))
 
-    @staticmethod
-    def _coerce_value_to_tag(value):
-        if isinstance(value, tuple) and len(value) == 2:
-            return TaskPaperTag(value[0], value[1] or '')
-        elif isinstance(value, str):
-            return TaskPaperTag(value, '')
+    def _update(self):
+        for key in list(self.keys()):
+            super(TagCollection, self).__delitem__(key)
+        for key, value in self._raw_tags().items():
+            super(TagCollection, self).__setitem__(key, value)
+
+    def _raw_tags(self):
+        rc = collections.OrderedDict()
+        for match in TAG_REGEX.finditer(self.item.text):
+            name = match.group('name')
+            value = match.group('value')
+            span = slice(*match.span())
+            rc[name] = TaskPaperTag(name, value, span)
+        return rc
+
+    def __setitem__(self, name, value=None):
+        self._update()
+        if value is None:
+            value = ""
+        raw_tags = self._raw_tags()
+        tag_str = stringify_tag(name=name, value=value)
+
+        # If the item already has a tag with this name, then we need to
+        # update the existing tag.
+        if name in raw_tags:
+
+            # Get the existing tag, and find the bounds of the existing tag
+            # within the item text.
+            span = raw_tags[name].span
+
+            self.item.text = (
+                self.item.text[:span.start+1] +
+                tag_str +
+                self.item.text[span.stop:]
+            )
+
+        # If the item doesn't have this tag yet, then just append it
+        # to the item.
         else:
-            raise ValueError("Cannot coerce %r to TaskPaperTag." % value)
+            self.item.text += ' {tag_str}'.format(tag_str=tag_str)
 
-    def __len__(self):
-        return len(self._tags)
+        self._update()
 
-    def __getitem__(self, position):
-        return self._tags[position]
+    def __delitem__(self, name):
+        self._update()
+        if name in self.keys():
+            value = self._raw_tags()[name]
+            span = value.span
 
-    def __setitem__(self, position, value):
-        # If the tag in question is a 'done' tag, it can only go at the
-        # end, and it has to replace any existing done tag.
-        tag = self._coerce_value_to_tag(value)
-
-        if tag.name == 'done':
-            del self._tags[position]
-            self._tags.insert(0, tag)
+            self.item.text = (
+                self.item.text[:span.start] +
+                self.item.text[span.stop:]
+            )
+            super(TagCollection, self).__delitem__(name)
         else:
-            self._tags[position] = tag
+            raise KeyError("Item %s is not tagged with %s" % (self.item, name))
 
-        self._rearrange_for_done()
-
-    def __delitem__(self, position):
-        del self._tags[position]
-
-    def insert(self, position, value):
-        # If the tag in question is a 'done' tag, it can only go at the
-        # end, and it has to replace any existing done tag.
-        tag = self._coerce_value_to_tag(value)
-
-        if tag.name == 'done':
-            self._tags.insert(0, tag)
+    def __getitem__(self, name):
+        self._update()
+        if name in self.keys():
+            return super(TagCollection, self).__getitem__(name).value
         else:
-            self._tags.insert(position, tag)
-
-        self._rearrange_for_done()
-
-    def _rearrange_for_done(self):
-        """
-        The 'done' tag can only ever go at the end, and must be unique
-        in a list of tags.  Rearrange the tag list to ensure this is
-        the case.
-        """
-        try:
-            done_tag = [tag for tag in self._tags if tag.name == 'done'].pop(0)
-        except IndexError:
-            return
-        new_tags = [tag for tag in self._tags
-                        if tag.name != 'done'] + [done_tag]
-        self._tags = new_tags
-
-    def __contains__(self, value):
-        # If we get a 2-tuple, assume that they're searching for an exact
-        # tag, and search accordingly.
-        if isinstance(value, tuple) and len(value) == 2:
-            return value in self._tags
-
-        # If we get a name, assume that they're searching for a tag with
-        # a given name, but don't care about the value.
-        elif isinstance(value, str):
-            return any(tag.name == value for tag in self._tags)
-
-        # No other search terms are acceptable.
-        else:
-            return False
-
-    def __eq__(self, other):
-        if len(self) != len(other):
-            return False
-        else:
-            return all(i == j for i, j in zip(sorted(self), sorted(other)))
-
-    def __ne__(self, other):
-        return not (self == other)
+            raise KeyError("Item %s is not tagged with %s" % (self.item, name))

@@ -4,8 +4,8 @@
 from .exceptions import TaskPaperError
 from .items import (
     TaskPaperItem,
-    TaskPaperTag,
 )
+from ._tags import TaskPaperTag
 from .taskpaper import TaskPaperDocument
 
 __all__ = [
