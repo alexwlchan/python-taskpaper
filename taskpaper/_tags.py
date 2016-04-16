@@ -114,11 +114,22 @@ class TagCollection(collections.OrderedDict):
             )
             super(TagCollection, self).__delitem__(name)
         else:
-            raise KeyError("Item %s is not tagged with %s" % (self.item, name))
+            raise KeyError("Item %r is not tagged with %r" % (str(self.item),
+                                                              name))
 
     def __getitem__(self, name):
         self._update()
-        if name in self.keys():
+        try:
             return super(TagCollection, self).__getitem__(name).value
+        except KeyError:
+            raise KeyError("Item %r is not tagged with %r" % (str(self.item),
+                                                              name))
+
+    def __eq__(self, other):
+        if len(self) != len(other):
+            return False
         else:
-            raise KeyError("Item %s is not tagged with %s" % (self.item, name))
+            return all(i == j for i, j in zip(self, other))
+
+    def __neq__(self, other):
+        return not (self == other)

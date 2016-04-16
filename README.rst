@@ -55,13 +55,13 @@ could use.  (I'd use Matt's library if I actually knew any Ruby.)
 How do I run the tests?
 ***********************
 
-Install ``pytest``, ``pytest-cov`` and ``hypothesis``::
+Install ``tox``, ideally in a virtualenv::
 
-    pip install pytest pytest-cov hypothesis
+    pip install tox
 
 then run the tests like so::
 
-    py.test --cov-report term-missing --cov taskpaper tests
+    make test
 
 This will run the tests, and show which lines aren't covered by existing tests.
 I'm trying to get better at writing tests with good coverage.
