@@ -5,6 +5,7 @@ This file contains some methods for testing the way we handle tags.
 The code under test is moderately fiddly.
 """
 
+from collections import OrderedDict
 import copy
 import random
 import string

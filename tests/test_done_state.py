@@ -5,6 +5,7 @@ This file contains some tests for the way items are marked with the
 'done' state.
 """
 
+from hypothesis import given, strategies as st
 import pytest
 
 import taskpaper
@@ -111,3 +112,10 @@ def test_setting_done_state_of_uncompleted_item(item_text):
 
     item.done = False
     assert not item.done
+
+
+@given(st.text(), st.booleans())
+def test_setting_done_state_on_arbitrary_items(item_text, state):
+    item = TaskPaperItem(item_text)
+    item.done = state
+    assert (state == item.done)
