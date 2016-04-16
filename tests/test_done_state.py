@@ -119,3 +119,15 @@ def test_setting_done_state_on_arbitrary_items(item_text, state):
     item = TaskPaperItem(item_text)
     item.done = state
     assert (state == item.done)
+
+
+@pytest.mark.parametrize('bad_state', [
+    'cabbage',
+    'truey false',
+    'maybe',
+    42,
+])
+def test_setting_bad_done_state_is_error(bad_state):
+    item = TaskPaperItem("hello world")
+    with pytest.raises(ValueError):
+        item.done = bad_state
