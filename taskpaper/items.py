@@ -4,7 +4,9 @@
 This file contains the TaskPaperItem class, and the associated setup code.
 """
 
-from ._links import LinkCollection
+import re
+
+from ._links import LINK_REGEX, LinkCollection
 from ._tags import TagCollection
 
 
@@ -47,3 +49,21 @@ class TaskPaperItem(object):
             self.tags['done'] = ''
         else:
             raise ValueError("Expected True/False, got %r" % value)
+
+    def _content(self):
+        content = self.text
+        for tag in reversed(self.tags._raw_tags().values()):
+            content = content[:tag.span.start] + content[tag.span.stop:]
+        for link in LINK_REGEX.findall(content):
+            content = content.replace(link, '')
+        return content
+
+    @property
+    def type(self):
+        content = self._content().lstrip()
+        if any(content.startswith('%s ' % i) for i in '-*+'):
+            return 'task'
+        elif content.rstrip().endswith(':'):
+            return 'project'
+        else:
+            return 'note'
