@@ -95,10 +95,20 @@ class LinkCollection(MutableSequence):
             }
             if re.search(EMAIL_REGEX, match.group(1), flags=re.IGNORECASE):
                 link['link_type'] = 'email'
-            elif re.search(PATH_REGEX, match.group(1), flags=re.IGNORECASE):
-                link['link_type'] = 'path'
-            else:
+                if not link['text'].startswith('mailto:'):
+                    link['href'] = 'mailto:{email}'.format(email=link['text'])
+            elif re.search(WEB_REGEX, match.group(1), flags=re.IGNORECASE):
                 link['link_type'] = 'web'
+                if not any(link['text'].startswith(h)
+                           for h in ('http://', 'https://')):
+                    link['href'] = 'http://{url}'.format(url=link['text'])
+            # elif re.search(PATH_REGEX, match.group(1), flags=re.IGNORECASE):
+            else:
+                link['link_type'] = 'path'
+                if not link['text'].startswith('file://'):
+                    link['href'] = 'file://{path}'.format(path=link['text'])
+            if 'href' not in link:
+                link['href'] = link['text']
             result.append(link)
         return result
 
