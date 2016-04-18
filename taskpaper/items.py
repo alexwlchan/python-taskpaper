@@ -33,6 +33,9 @@ class TaskPaperItem(object):
     def raw_tags(self):
         return self.tags._raw_tags()
 
+    def raw_links(self):
+        return self.links._raw_links()
+
     @property
     def done(self):
         """

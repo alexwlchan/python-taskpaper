@@ -87,10 +87,20 @@ class LinkCollection(MutableSequence):
         return str(self)
 
     def _raw_links(self):
-        try:
-            return list(LINK_REGEX.finditer(self.item.text))
-        except AttributeError:
-            return []
+        result = []
+        for match in LINK_REGEX.finditer(self.item.text):
+            link = {
+                'type': 'link',
+                'text': match.group(1),
+            }
+            if re.search(EMAIL_REGEX, match.group(1), flags=re.IGNORECASE):
+                link['link_type'] = 'email'
+            elif re.search(PATH_REGEX, match.group(1), flags=re.IGNORECASE):
+                link['link_type'] = 'path'
+            else:
+                link['link_type'] = 'web'
+            result.append(link)
+        return result
 
     def __len__(self):
         return len(self._raw_links())
