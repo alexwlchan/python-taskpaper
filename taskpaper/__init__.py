@@ -6,7 +6,7 @@ from .items import (
     TaskPaperItem,
 )
 from ._tags import TaskPaperTag
-from .taskpaper import TaskPaperDocument
+from .document import TaskPaperDocument
 
 __all__ = [
     TaskPaperTag,

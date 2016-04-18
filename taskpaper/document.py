@@ -15,13 +15,18 @@ class TaskPaperDocument(object):
 
     def __init__(self, path):
         self.path = path
+        self._text = ""
+        self.items = []
+        self._parse()
+
+    def __repr__(self):
+        return '%s(path=%r)' % (type(self).__name__, self.path)
+
+    def _parse(self):
         self._text = self._read()
         self.items = [
             TaskPaperItem(line) for line in self._text.splitlines()
         ]
-
-    def __repr__(self):
-        return '%s(path=%r)' % (type(self).__name__, self.path)
 
     def _read(self):
         try:
