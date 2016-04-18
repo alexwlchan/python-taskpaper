@@ -8,9 +8,6 @@ import collections
 import re
 
 
-TaskPaperTag = collections.namedtuple('TaskPaperTag', 'name value span')
-
-
 # Regex for matching tags. http://guide.taskpaper.com/getting_started.html:
 #
 #  > To create a tag, type the @ symbol followed by a name. Tags can
@@ -71,7 +68,12 @@ class TagCollection(collections.OrderedDict):
             name = match.group('name')
             value = match.group('value')
             span = slice(*match.span())
-            rc[name] = TaskPaperTag(name, value, span)
+            rc[name] = {
+                'name': name,
+                'value': value,
+                'span': span,
+                'type': 'tag'
+            }
         return rc
 
     def __setitem__(self, name, value=None):

@@ -30,6 +30,9 @@ class TaskPaperItem(object):
     def add_tag(self, name, value=""):
         self.tags[name] = value
 
+    def raw_tags(self):
+        return self.tags._raw_tags()
+
     @property
     def done(self):
         """
@@ -52,8 +55,8 @@ class TaskPaperItem(object):
 
     def _content(self):
         content = self.text
-        for tag in reversed(self.tags._raw_tags().values()):
-            content = content[:tag.span.start] + content[tag.span.stop:]
+        for tag in reversed(self.raw_tags().values()):
+            content = content[:tag['span'].start] + content[tag['span'].stop:]
         for link in LINK_REGEX.findall(content):
             content = content.replace(link, '')
         return content
