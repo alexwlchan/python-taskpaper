@@ -89,7 +89,7 @@ class TagCollection(collections.OrderedDict):
 
             # Get the existing tag, and find the bounds of the existing tag
             # within the item text.
-            span = raw_tags[name].span
+            span = raw_tags[name]['span']
 
             self.item.text = (
                 self.item.text[:span.start+1] +
@@ -108,7 +108,7 @@ class TagCollection(collections.OrderedDict):
         self._update()
         if name in self.keys():
             value = self._raw_tags()[name]
-            span = value.span
+            span = value['span']
 
             self.item.text = (
                 self.item.text[:span.start] +

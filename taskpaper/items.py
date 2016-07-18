@@ -5,6 +5,7 @@ This file contains the TaskPaperItem class, and the associated setup code.
 """
 
 import re
+import sys
 
 from ._links import LINK_REGEX, LinkCollection
 from ._tags import TagCollection, stringify_tag
@@ -25,7 +26,10 @@ class TaskPaperItem(object):
         return '%s(text=%r)' % (type(self).__name__, self.text)
 
     def __str__(self):
-        return self.text
+        if sys.version_info > (3, 0):
+            return self.text
+        else:
+            return unicode(self.text).encode('utf-8')
 
     def add_tag(self, name, value=""):
         self.tags[name] = value
