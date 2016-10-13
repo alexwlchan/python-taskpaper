@@ -1,0 +1,6 @@
+.coverage
+.hypothesis
+*.egg-info
+.tox
+*.pyc
+__pycache__
