@@ -4,3 +4,4 @@
 .tox
 *.pyc
 __pycache__
+.cache
