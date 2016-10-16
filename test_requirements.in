@@ -1,0 +1,5 @@
+coverage
+hypothesis
+pytest
+pytest-cov
+pytest-xdist
