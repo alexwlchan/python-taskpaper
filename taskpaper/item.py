@@ -10,9 +10,18 @@ class TaskPaperItem(object):
         :param tab_size: Number of spaces used per indentation level.
         :param parent: Parent task.
         """
+        self.text = text
         self.tab_size = tab_size
         self.children = []
         self.parent = parent
+
+    def __repr__(self):
+        return '%s(text=%r, tab_size=%r, parent=%r)' % (
+            type(self).__name__,
+            self.text,
+            self.tab_size,
+            self.parent,
+        )
 
     @property
     def parent(self):
@@ -28,6 +37,12 @@ class TaskPaperItem(object):
         if self._parent is new_parent:
             return
 
+        # Check that we aren't about to make this item its own parent
+        if new_parent is self:
+            raise TaskPaperError(
+                'Cannot make %r a parent of itself'
+            )
+
         # Check that we aren't about to form a circular cycle of parents --
         # in particular, that we aren't our new parent's parent, or any of
         # its ancestors.
@@ -35,7 +50,7 @@ class TaskPaperItem(object):
             for ancestor in new_parent.ancestors:
                 if ancestor is self:
                     raise TaskPaperError(
-                        'Making %s a parent of %s would create a circular '
+                        'Making %r a parent of %r would create a circular '
                         'family tree' % (self, new_parent)
                     )
 

@@ -97,3 +97,11 @@ class TestParentChildRelationship(object):
         # get an exception.
         with pytest.raises(TaskPaperError):
             items[-1].parent = items[0]
+
+    def test_an_item_cannot_be_its_own_parent(self):
+        """
+        An item cannot be its own parent.
+        """
+        item = TaskPaperItem('hello world')
+        with pytest.raises(TaskPaperError):
+            item.parent = item
