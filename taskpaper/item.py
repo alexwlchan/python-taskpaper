@@ -1,5 +1,7 @@
 # -*- encoding: utf-8 -*-
 
+from .exceptions import TaskPaperError
+
 
 class TaskPaperItem(object):
 
@@ -26,6 +28,17 @@ class TaskPaperItem(object):
         if self._parent is new_parent:
             return
 
+        # Check that we aren't about to form a circular cycle of parents --
+        # in particular, that we aren't our new parent's parent, or any of
+        # its ancestors.
+        if new_parent is not None:
+            for ancestor in new_parent.ancestors:
+                if ancestor is self:
+                    raise TaskPaperError(
+                        'Making %s a parent of %s would create a circular '
+                        'family tree' % (self, new_parent)
+                    )
+
         # If we already had a parent, remove ourselves from its children
         if self._parent is not None:
             self._parent.children.remove(self)
@@ -35,3 +48,10 @@ class TaskPaperItem(object):
             new_parent.children.append(self)
 
         self._parent = new_parent
+
+    @property
+    def ancestors(self):
+        current = self
+        while current.parent is not None:
+            yield current.parent
+            current = current.parent

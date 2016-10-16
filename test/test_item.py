@@ -1,18 +1,25 @@
 # -*- encoding: utf-8 -*-
 
 from hypothesis import given
-from hypothesis.strategies import integers
+from hypothesis.strategies import integers, lists
+import pytest
 
-from taskpaper import TaskPaperItem
+from taskpaper import TaskPaperItem, TaskPaperError
+
+from utils import taskpaper_item_strategy
 
 
 @given(integers())
 def test_setting_tab_size(tab_size):
-    item = TaskPaperItem(tab_size=tab_size)
+    """We can set the tab size on TaskPaperItem."""
+    item = TaskPaperItem('hello world', tab_size=tab_size)
     assert item.tab_size == tab_size
 
 
 class TestParentChildRelationship(object):
+    """
+    Tests of the parent-child relationship between items.
+    """
 
     def test_default_parent_is_none(self):
         """By default, a task does not have a parent."""
@@ -65,3 +72,28 @@ class TestParentChildRelationship(object):
         item_c.parent = None
         assert item_c.parent is None
         assert item_p.children == []
+
+    def test_detect_item_cannot_be_its_parents_parent(self):
+        """
+        An item cannot be the parent of its own parent.
+        """
+        item_p = TaskPaperItem('parent')
+        item_c = TaskPaperItem('child', parent=item_p)
+
+        with pytest.raises(TaskPaperError):
+            item_p.parent = item_c
+
+    @given(lists(taskpaper_item_strategy(), min_size=2))
+    def test_detecting_circular_chain(self, items):
+        """
+        We detect an arbitrarily long circular parent chain.
+        """
+        # Create a chain of parent-child relationships
+        #    items[0] -> items[1] -> ... -> items[n]
+        for idx, alt_item in enumerate(items[1:], start=1):
+            items[idx-1].parent = alt_item
+
+        # Now make the first item the parent of the last, and check we
+        # get an exception.
+        with pytest.raises(TaskPaperError):
+            items[-1].parent = items[0]
